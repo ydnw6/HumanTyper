@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)
 
-[**⬇ 下载最新版**](https://github.com/ydnw6/HumanTyper/releases/latest) · [使用方法](#快速上手) · [参数说明](#参数说明) · [常见问题](#常见问题) · [中文] · [English](README_EN.md)
+[**⬇ 下载最新版**](https://github.com/ydnw6/HumanTyper/releases/latest) · [使用方法](#快速上手) · [参数说明](#参数说明) · [常见问题](#常见问题) · [English](docs/README_EN.md)
 
 <img src="docs/screenshot.png" alt="HumanTyper 主界面" width="760">
 
@@ -229,7 +229,7 @@ HumanTyper/
 ├─ tools/PinyinGen/      生成拼音表的小工具（数据来自 mozillazg/pinyin-data，MIT）
 ├─ docs/
 │   ├─screenshot.png
-│   └─
+│   └─README_EN.md
 ├─ app.manifest
 └─ HumanTyper.csproj
 ```

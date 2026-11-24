@@ -1,3 +1,8 @@
+为你整理好了完整的英文版 `README_EN.md`（你可以直接作为独立的英文 README，或者用来替换底部的简短英文说明，并在顶部增加语言切换链接 `[中文](README.md) · [English](README_EN.md)`）。
+
+译文保留了原版所有的排版细节、GitHub 警告框、折叠详情栏以及地道的技术术语表达：
+
+```markdown
 <div align="center">
 
 # HumanTyper
@@ -12,7 +17,7 @@ Natural pacing · Occasional typos & corrections · Word & sentence pauses · Ch
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)
 
-[**⬇ Download Latest**](https://github.com/ydnw6/HumanTyper/releases/latest) · [Quick Start](#quick-start) · [Parameters](#parameters) · [FAQ](#faq) · [中文](README.md) · [English]
+[**⬇ Download Latest**](https://github.com/ydnw6/HumanTyper/releases/latest) · [Quick Start](#quick-start) · [Parameters](#parameters) · [FAQ](#faq) · [中文](../README.md)
 
 <img src="docs/screenshot.png" alt="HumanTyper Main Interface" width="760">
 
@@ -199,3 +204,72 @@ Requires [.NET SDK](https://dotnet.microsoft.com/download) (6.0 or newer to buil
 git clone [https://github.com/ydnw6/HumanTyper.git](https://github.com/ydnw6/HumanTyper.git)
 cd HumanTyper
 dotnet build HumanTyper.csproj -c Release -o out
+
+```
+
+Run the compiled `out/HumanTyper.exe` directly.
+
+### Project Structure
+
+```
+HumanTyper/
+├─ src/
+│  ├─ Program.cs         Entry point (single-instance guard)
+│  ├─ MainForm.cs        Main UI, global hotkeys, countdown timer
+│  ├─ TypingEngine.cs    Core engine: pacing, typos, pauses, pause/resume logic, key dispatch
+│  ├─ Proofreader.cs     Post-typing verification: text readback, diffing, keyboard correction
+│  ├─ OcrMatch.cs        OCR matching: aligns OCR tokens with source (dual-pass consensus only)
+│  ├─ ScreenOcr.cs       Window capture + Windows.Media.Ocr integration
+│  ├─ ClipboardText.cs   Clipboard backup / read / restore
+│  ├─ ProgressOverlay.cs Floating HUD overlay (non-focus-stealing, excluded from capture)
+│  ├─ TaskbarProgress.cs Windows taskbar button progress indicator
+│  ├─ FreeNotice.cs      Permanently-free notice dialog
+│  ├─ KeyboardOut.cs     Key output backends: Unicode / Scan Code / Interception driver
+│  ├─ Pinyin.cs          Hanzi → Pinyin converter (with polyphone support) for Keyboard Mode
+│  ├─ Resources/pinyin.dat.gz  Embedded Pinyin dictionary
+│  ├─ CaretProbe.cs      Foreground window focus & caret position probe (Win32 / MSAA)
+│  ├─ InputMonitor.cs    Low-level keyboard/mouse hooks to detect manual user input
+│  ├─ HotkeyBox.cs       Custom hotkey capture control
+│  ├─ Settings.cs        INI configuration persistence
+│  └─ NativeMethods.cs   Win32 P/Invoke declarations
+├─ tools/PinyinGen/      Utility to generate the Pinyin dictionary (data from mozillazg/pinyin-data, MIT)
+├─ docs/
+│   ├─screenshot.png
+│   └─README_EN.md
+├─ app.manifest
+└─ HumanTyper.csproj
+
+```
+
+### How It Works (Under the Hood)
+
+* **Input Injection**: Standard mode dispatches characters via `SendInput` with `KEYEVENTF_UNICODE`. Keyboard mode maps characters to standard US QWERTY scan codes (handling `Shift` states) and sends them via `KEYEVENTF_SCANCODE` or the Interception driver, converting Chinese into Pinyin for the remote IME.
+* **Pacing Model**: Multiplies the target base speed by log-normal random jitter and a slowly drifting "fatigue/flow" factor, fine-tuned by character category and common English digraph frequencies.
+* **Pause Detection**: Records the foreground window handle, focused control, and caret coordinates at start, re-sampling after every keystroke. Low-level hooks trigger a pause whenever genuine (non-injected) mouse clicks or keystrokes occur, resuming only when window, focus, and caret position match.
+* **Proofreading**: Records pre-existing character count before typing; upon completion, reads back text via UI Automation `TextPattern`, runs a Myers diff between the newly typed slice and source text, and applies corrections in reverse order so offsets never shift.
+
+## CI/CD & Automated Releases
+
+This repository uses GitHub Actions for automated builds and releases ([`.github/workflows/build.yml`](https://www.google.com/search?q=.github/workflows/build.yml)):
+
+* **Auto Build**: Every push, PR, or manual dispatch compiles the binary and uploads `HumanTyper.exe` as a workflow artifact.
+* **Auto Release**: Pushing code changes to `main` automatically creates a new release `vX.Y.N` (auto-incrementing `N`) with the attached `.exe` and changelog since the last tag. Documentation-only commits trigger a build without publishing a release.
+* Major/minor versions are read from `<Version>` in `HumanTyper.csproj` (e.g., setting `1.1.0` makes the next release `v1.1.1`).
+
+## Contributing
+
+Issues and Pull Requests are welcome! Feel free to open an [Issue](https://github.com/ydnw6/HumanTyper/issues) for bugs or feature requests:
+
+1. Fork the repository and create a new branch;
+2. Verify your changes compile cleanly with `dotnet build` and test them in Notepad or your target app;
+3. Submit a PR describing what changed and why (CI will automatically run a build check).
+
+When reporting bugs, please include the target application (e.g., specific website in Chrome, Word, Notepad), steps to reproduce, and any status bar messages.
+
+## Disclaimer
+
+This tool is intended for legitimate purposes such as software demos, screen recordings, tutorials, and accessibility assistance. Do not use it in violation of exam rules, platform policies, or terms of service. Users assume full responsibility for how they use this software.
+
+## License
+
+[MIT](https://www.google.com/search?q=LICENSE) © 2026 ydnw6. This software is permanently free—if you paid for it, demand a refund and report the seller. Third-party data licenses are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
