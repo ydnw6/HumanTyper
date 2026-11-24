@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)
 
-[**⬇ 下载最新版**](https://github.com/ydnw6/HumanTyper/releases/latest) · [使用方法](#快速上手) · [参数说明](#参数说明) · [常见问题](#常见问题) · [English](#english)
+[**⬇ 下载最新版**](https://github.com/ydnw6/HumanTyper/releases/latest) · [使用方法](#快速上手) · [参数说明](#参数说明) · [常见问题](#常见问题) · [中文] · [English](README_EN.md)
 
 <img src="docs/screenshot.png" alt="HumanTyper 主界面" width="760">
 
@@ -227,7 +227,9 @@ HumanTyper/
 │  ├─ Settings.cs        设置的保存与读取
 │  └─ NativeMethods.cs   Win32 API 声明
 ├─ tools/PinyinGen/      生成拼音表的小工具（数据来自 mozillazg/pinyin-data，MIT）
-├─ docs/screenshot.png
+├─ docs/
+│   ├─screenshot.png
+│   └─
 ├─ app.manifest
 └─ HumanTyper.csproj
 ```
@@ -264,11 +266,3 @@ HumanTyper/
 ## 许可证
 
 [MIT](LICENSE) © 2026 ydnw6。本软件永久免费，付费购买请退款并举报卖家。第三方数据的许可见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
-
----
-
-## English
-
-**HumanTyper** is a small Windows tool that types text into any input box the way a person would: uneven rhythm, occasional typos that get noticed and backspaced, short pauses between words and longer ones between sentences and paragraphs. It supports Chinese (IME-like word-by-word commits) and English. It pauses automatically when you switch windows or move the caret and resumes once the caret is back. After finishing, it reads the text back, diffs it against the source, and fixes any differences using arrow keys, Backspace and retyping. A keyboard mode (scan codes, or the optional Interception driver) sends real key presses so it also works inside remote-desktop / remote-control windows such as ToDesk, Sunlogin, RDP and VMs; Chinese is then typed as pinyin through the remote IME.
-
-Download `HumanTyper.exe` from the [latest release](https://github.com/ydnw6/HumanTyper/releases/latest) (Windows 10/11, no install). Default hotkeys: `F8` start / pause / resume, `F9` stop, `F10` restart. Licensed under [MIT](LICENSE).
