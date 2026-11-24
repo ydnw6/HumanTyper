@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/icon/icon-mac-1024.png" width="128" height="128" alt="HumanTyper icon">
+
 # HumanTyper
 
 **像真人一样打字的自动输入工具（Windows / macOS）**
@@ -131,7 +133,7 @@ ToDesk、向日葵、Windows 远程桌面、VNC、虚拟机这类窗口只转发
 Mac 版是用 Swift 原生编写的独立程序（源码在 [`mac/`](mac)），打字引擎与 Windows 版相同：拟人节奏、模拟错字、思考停顿、中英文混排、自动暂停 / 继续、打完核对、进度悬浮窗都有。
 
 1. 到 [Releases](https://github.com/ydnw6/HumanTyper/releases/latest) 下载 `HumanTyper.dmg`，双击打开后把 `HumanTyper.app` 拖到旁边的"应用程序"文件夹即可（无需解压；同一个安装包同时支持 M 系列芯片和 Intel 芯片）。
-2. 第一次打开：程序没有付费的 Apple 开发者签名，请**右键 → 打开 → 打开**（或在"系统设置 → 隐私与安全性"里点"仍要打开"）。
+2. 第一次打开：程序没有付费的 Apple 开发者签名，macOS 15 及以上请先关掉提示，到"系统设置 → 隐私与安全性"页面下方点**"仍要打开"**；macOS 14 及以下可以**右键 → 打开 → 打开**。
 3. 按提示在 **系统设置 → 隐私与安全性 → 辅助功能** 里打开 HumanTyper 的开关（模拟键盘、读取光标都需要这个权限）。升级新版本后如果不能打字，先删掉列表里旧的 HumanTyper 再重新添加。
 4. 用法和 Windows 版一样：粘贴文字，点 **开始** 后在倒计时内点一下目标输入框，或者先点好位置再按 `F8`。笔记本键盘上 F8–F10 默认是媒体键，要同时按 `fn`，也可以在设置里改成别的组合键。
 

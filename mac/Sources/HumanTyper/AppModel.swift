@@ -135,6 +135,17 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Clears a stale Accessibility entry (left by an older build) and asks again. No admin rights needed.
+    func resetAccessibility() {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        p.arguments = ["reset", "Accessibility", Bundle.main.bundleIdentifier ?? "io.github.ydnw6.HumanTyper"]
+        try? p.run()
+        p.waitUntilExit()
+        status = "已清除旧授权 — 请在弹出的系统设置里重新打开 HumanTyper 的开关"
+        openAccessibilitySettings()
+    }
+
     // ------------------------------------------------------------------ commands
 
     /// "开始" button: countdown, then type into whatever has focus when it ends.
@@ -182,6 +193,7 @@ final class AppModel: ObservableObject {
         if countdownLeft != nil {
             cancelCountdown()
             status = "已取消"
+            if settings.hideOnStart { NSApp.unhide(nil) }
             return
         }
         engine.stop()
@@ -191,6 +203,7 @@ final class AppModel: ObservableObject {
         cancelCountdown()
         guard checkReady() else { return }
         if engine.isBusy { engine.stopAndWait() }
+        if engine.isBusy { status = "上一次输入还没停下，请稍后再试"; return }
         beginOnFrontApp()
     }
 

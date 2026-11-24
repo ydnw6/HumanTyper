@@ -19,10 +19,16 @@ struct ContentView: View {
     }
 
     private var permissionBanner: some View {
-        HStack {
+        HStack(alignment: .center, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
-            Text("需要在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper，才能模拟键盘输入。")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("需要在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper，才能模拟键盘输入。")
+                Text("开关已经是打开的？那是旧版本留下的授权，对这个版本无效：点“重新授权”清掉旧记录，再打开一次开关。")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            .fixedSize(horizontal: false, vertical: true)
             Spacer()
+            Button("重新授权") { model.resetAccessibility() }
             Button("打开设置") { model.openAccessibilitySettings() }
         }
         .padding(10)
@@ -43,7 +49,8 @@ struct ContentView: View {
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.secondary.opacity(0.3)))
             HStack(spacing: 8) {
                 Button(model.countdownLeft.map { "倒计时 \($0)…" } ?? "开始") { model.startWithCountdown() }
-                    .keyboardShortcut(.defaultAction)
+                    .keyboardShortcut(.return, modifiers: .command)   // plain Return belongs to the text box
+                    .help("开始（⌘↩）")
                     .disabled(model.isBusy || model.countdownLeft != nil)
                 Button(model.isPaused ? "继续" : "暂停") { model.togglePause() }
                     .disabled(!model.isBusy)

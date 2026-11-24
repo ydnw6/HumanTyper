@@ -89,6 +89,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dmgbuild
+        run: pip3 install --break-system-packages dmgbuild
+
       - name: Build app
         working-directory: mac
         run: bash build-app.sh "${{ needs.version.outputs.version }}"
@@ -133,7 +136,7 @@ jobs:
             echo "## 下载"
             echo
             echo "- **Windows**：下载 **HumanTyper.exe**，双击运行即可（Windows 10/11，系统自带 .NET Framework 4.8，无需安装）。"
-            echo "- **macOS**：下载 **HumanTyper.dmg**，双击打开后把 HumanTyper.app 拖到“应用程序”（无需解压）。第一次打开请右键 → 打开，并在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper（macOS 12 及以上，Apple 芯片和 Intel 通用）。"
+            echo "- **macOS**：下载 **HumanTyper.dmg**，双击打开后把 HumanTyper.app 拖到“应用程序”（无需解压）。第一次打开若提示无法验证开发者：macOS 15 及以上到“系统设置 → 隐私与安全性”点“仍要打开”，macOS 14 及以下右键 → 打开。然后在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper（macOS 12 及以上，Apple 芯片和 Intel 通用）。"
             echo
             echo "> 本软件永久免费开源，付费购买请退款并举报卖家。"
           } > notes.md
