@@ -137,7 +137,7 @@ Mac 版是用 Swift 原生编写的独立程序（源码在 [`mac/`](mac)），�
 
 与 Windows 版的区别：
 
-- 只有"标准"输入方式（直接发送 Unicode 字符），暂不支持键盘扫描码 / 驱动级模式，所以远程桌面窗口里的中文暂时打不了。
+- 有"标准"和"键盘按键"两种输入方式。键盘按键模式发出和实体键盘一样的按键（美式键位），可以在 ToDesk、向日葵、Microsoft 远程桌面、VNC、虚拟机等窗口里打字；中文会转成拼音、交给**目标电脑的中文输入法**打出，用法和 Windows 版的"键盘扫描码"模式相同（选对目标输入法开始时的中英文状态和切换键）。没有驱动级模式。
 - 打字时默认临时切换到英文键盘布局，避免中文输入法把按键当成拼音截走，打完自动切回（可在设置里关闭）。
 - 核对通过 macOS 辅助功能接口读回输入框文字；读不到的程序（部分自绘界面）会跳过核对，没有剪贴板 / 截图识别的备用方式。
 - 设置保存在系统偏好里（`defaults read io.github.ydnw6.HumanTyper`）。
@@ -232,27 +232,44 @@ dotnet build HumanTyper.csproj -c Release -o out
 
 ```
 HumanTyper/
-├─ src/
-│  ├─ Program.cs         入口（单实例）
-│  ├─ MainForm.cs        界面、全局快捷键、倒计时
-│  ├─ TypingEngine.cs    打字引擎：节奏、错字、思考停顿、暂停/继续判断、键盘发送
-│  ├─ Proofreader.cs     打完核对：读回文本、差异比对、用键盘修正
-│  ├─ OcrMatch.cs        截图识别核对：OCR 词与原文比对（只认两遍一致的错词）
-│  ├─ ScreenOcr.cs       截图 + Windows.Media.Ocr
-│  ├─ ClipboardText.cs   剪贴板保存 / 读取 / 还原
-│  ├─ ProgressOverlay.cs 进度悬浮窗（不抢焦点、不进截图）
-│  ├─ TaskbarProgress.cs 任务栏按钮进度
-│  ├─ FreeNotice.cs      永久免费声明弹窗
-│  ├─ KeyboardOut.cs     键盘输出：Unicode / 扫描码 / Interception 驱动
-│  ├─ Pinyin.cs          汉字 → 拼音（含多音词），键盘模式下打拼音用
-│  ├─ Resources/pinyin.dat.gz  内置拼音表
-│  ├─ CaretProbe.cs      读取前台窗口的输入焦点和光标位置（Win32 / MSAA）
-│  ├─ InputMonitor.cs    低级键盘/鼠标钩子，检测用户手动操作
-│  ├─ HotkeyBox.cs       快捷键录入控件
-│  ├─ Settings.cs        设置的保存与读取
-│  └─ NativeMethods.cs   Win32 API 声明
-├─ mac/                 Mac 版（Swift / SwiftUI，build-app.sh 打包成 .app）
-├─ tools/PinyinGen/      生成拼音表的小工具（数据来自 mozillazg/pinyin-data，MIT）
+├─ src/                     Windows 版（C# / WinForms，.NET Framework 4.8）
+│  ├─ Program.cs            入口（单实例）
+│  ├─ MainForm.cs           界面、全局快捷键、倒计时
+│  ├─ TypingEngine.cs       打字引擎：节奏、错字、思考停顿、暂停/继续判断、键盘发送
+│  ├─ Proofreader.cs        打完核对：读回文本、差异比对、用键盘修正
+│  ├─ OcrMatch.cs           截图识别核对：OCR 词与原文比对（只认两遍一致的错词）
+│  ├─ ScreenOcr.cs          截图 + Windows.Media.Ocr
+│  ├─ ClipboardText.cs      剪贴板保存 / 读取 / 还原
+│  ├─ ProgressOverlay.cs    进度悬浮窗（不抢焦点、不进截图）
+│  ├─ TaskbarProgress.cs    任务栏按钮进度
+│  ├─ FreeNotice.cs         永久免费声明弹窗
+│  ├─ KeyboardOut.cs        键盘输出：Unicode / 扫描码 / Interception 驱动
+│  ├─ DriverSetup.cs        Interception 驱动一键安装 / 卸载
+│  ├─ Pinyin.cs             汉字 → 拼音（含多音词），键盘模式下打拼音用
+│  ├─ Resources/pinyin.dat.gz  内置拼音表（Windows 版和 Mac 版共用）
+│  ├─ CaretProbe.cs         读取前台窗口的输入焦点和光标位置（Win32 / MSAA）
+│  ├─ InputMonitor.cs       低级键盘/鼠标钩子，检测用户手动操作
+│  ├─ HotkeyBox.cs          快捷键录入控件
+│  ├─ Settings.cs           设置的保存与读取
+│  └─ NativeMethods.cs      Win32 API 声明
+├─ mac/                     Mac 版（Swift / SwiftUI + AppKit，macOS 12+）
+│  ├─ Package.swift         SwiftPM 工程描述
+│  ├─ build-app.sh          编译通用二进制（arm64 + x86_64），打包 HumanTyper.app 和 HumanTyper.dmg
+│  └─ Sources/HumanTyper/
+│     ├─ HumanTyperApp.swift  入口、菜单、单实例
+│     ├─ ContentView.swift    主界面和设置面板、快捷键录入
+│     ├─ AppModel.swift       界面状态、倒计时、开始/暂停/停止、免费声明、权限提示
+│     ├─ TypingEngine.swift   打字引擎（从 Windows 版移植）：节奏、错字、停顿、拼音输入、暂停/继续、核对
+│     ├─ KeyboardOut.swift    键盘输出：Unicode / 真实按键（美式键位），临时切换英文键盘布局
+│     ├─ Pinyin.swift         汉字 → 拼音（读取共用的拼音表）
+│     ├─ CaretProbe.swift     通过辅助功能 API 读取输入焦点、光标位置和文本
+│     ├─ HotKeys.swift        全局快捷键（Carbon）+ 用户手动操作监听
+│     ├─ Overlay.swift        进度悬浮窗（不抢焦点、不进截图）
+│     └─ Settings.swift       设置的保存与读取（UserDefaults）
+├─ tools/PinyinGen/         生成拼音表的小工具（数据来自 mozillazg/pinyin-data，MIT）
+├─ site/                    官网和下载页（Cloudflare Pages）
+├─ functions/api/           下载页用的 GitHub Releases 缓存接口
+├─ .github/workflows/build.yml  自动构建 Windows + Mac，手动发布
 ├─ docs/
 │   ├─screenshot.png
 │   └─README_EN.md

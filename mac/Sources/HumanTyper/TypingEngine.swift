@@ -58,7 +58,8 @@ final class TypingEngine {
     private var startFocus: AXUIElement?
     private var startLoc = -1
 
-    private let kb = KeyboardOut()
+    private var kb = KeyboardOut()
+    private var imeChinese = true    // what we believe the target's IME mode is (Chinese / English)
     private let ownPid = ProcessInfo.processInfo.processIdentifier
     private var now: Int64 { Int64(ProcessInfo.processInfo.systemUptime * 1000) }
 
@@ -78,6 +79,8 @@ final class TypingEngine {
         stopFlag = false; manualPause = false; rebaseline = false; autoPaused = false; interfered = false
         unsampled = 0; catchUp = 0; caretTracks = false
         flow = 1.0; pendingSentence = false; noTypoAt = -1; fixing = false
+        kb = KeyboardOut(keyMode: settings.inputMode == 1)
+        imeChinese = settings.remoteImeChinese
         resetWordCounter(); resetSentenceCounter()
         let t = Thread { [weak self] in self?.worker() }
         t.name = "HumanTyper"
@@ -128,6 +131,7 @@ final class TypingEngine {
             try run()
             progress(u.count, force: true)
             if s.proofread { try proofread() }
+            if kb.isKeyMode { try setIme(s.remoteImeChinese) }   // leave the input method as we found it
         } catch is Cancelled {
             final = .stopped
         } catch {
@@ -145,8 +149,16 @@ final class TypingEngine {
             if TypingEngine.isCjk(unit) {
                 var runEnd = i
                 while runEnd < n && TypingEngine.isCjk(u[runEnd]) { runEnd += 1 }
-                let len = pickChunkLength(runEnd - i)
-                try typeCjkChunk(i, len)
+                let len: Int
+                if kb.isKeyMode {
+                    // Typing pinyin: longer chunks give the remote IME context to pick the right words.
+                    let run = runEnd - i
+                    len = run <= 7 ? run : Int.random(in: 2...6)
+                    try typePinyinChunk(i, len)
+                } else {
+                    len = pickChunkLength(runEnd - i)
+                    try typeCjkChunk(i, len)
+                }
                 i += len
                 progress(i, force: false)
                 try afterWord(i - 1)
@@ -167,6 +179,8 @@ final class TypingEngine {
 
             try wait(latinDelay(i))
             try key(unit)
+            // In keyboard mode one Shift+6 / Shift+- already gives "……" / "——".
+            if kb.isKeyMode && (unit == "…" || unit == "—") && i + 1 < n && u[i + 1] == unit { i += 1 }
             i += 1
             progress(i, force: false)
             try afterUnit(i - 1)
@@ -259,6 +273,65 @@ final class TypingEngine {
         }
         return "的"
     }
+
+    // ------------------------------------------------------------------ Chinese via pinyin keys (remote mode)
+
+    /// Types Chinese the way a person does on a real keyboard: pinyin letters into the IME, then Space to
+    /// commit the top candidate. Characters with no known reading fall back to Unicode.
+    private func typePinyinChunk(_ start: Int, _ len: Int) throws {
+        let syl = Pinyin.of(u, start, len)
+        if syl.contains(where: { $0 == nil }) {
+            // Some character has no known reading: go one by one so the rest still works.
+            for k in 0..<len {
+                if let one = syl[k] { try typePinyin([one], chars: 1) }
+                else { try wait(cjkBaseMs * jitter()); try keyRaw(u[start + k]) }
+            }
+            return
+        }
+        try typePinyin(syl.compactMap { $0 }, chars: len)
+    }
+
+    private func typePinyin(_ syllables: [String], chars: Int) throws {
+        let py = Array(Pinyin.join(syllables))
+        try setIme(true)
+        let unsampledBefore = unsampled
+        let perLetter = Double(chars) * cjkBaseMs * (fixing ? 0.45 : 0.8) / Double(max(1, py.count))
+        for ch in py {
+            try wait(clamp(perLetter * flow * jitter(), 25, perLetter * 5))
+            if ch != "'" && chance(s.typoRate / 100), let nb = TypingEngine.neighbors[ch], let w = nb.randomElement() {
+                // fat-fingered a pinyin letter: notice in the candidate bar, delete, retype
+                try keyRaw(String(w))
+                try wait(rand(250, 700))
+                try keyRaw(TypingEngine.backspace)
+                try wait(rand(90, 220))
+            }
+            try keyRaw(String(ch))
+        }
+        try wait(fixing ? rand(60, 160) : rand(150, 550))     // look at the candidates
+        try keyRaw(" ")                                      // Space = top candidate
+        unsampled = unsampledBefore + chars
+    }
+
+    /// Switches the target IME between Chinese and English mode if needed.
+    private func setIme(_ chinese: Bool) throws {
+        guard kb.isKeyMode, imeChinese != chinese else { return }
+        try gate()
+        try wait(rand(120, 350))
+        try gate()
+        if s.imeToggleKey == 1 { kb.ctrlSpace() } else { kb.loneShift() }
+        imeChinese = chinese
+        lastKeyMs = now
+        try wait(rand(150, 350))
+    }
+
+    private static let backspace = "\u{8}"
+
+    // Chinese punctuation → the key that produces it while the IME is in Chinese mode.
+    private static let cnPunctKeys: [String: String] = [
+        "，": ",", "。": ".", "？": "?", "！": "!", "：": ":", "；": ";", "、": "\\",
+        "（": "(", "）": ")", "《": "<", "》": ">", "“": "\"", "”": "\"", "‘": "'", "’": "'",
+        "【": "[", "】": "]", "…": "^", "—": "_", "·": "`", "￥": "$", "「": "[", "」": "]",
+    ]
 
     // ------------------------------------------------------------------ Latin typos
 
@@ -524,7 +597,8 @@ final class TypingEngine {
         if interfered {
             if now - lastUserInputMs < 450 { return "检测到手动操作，已暂停…" }
             if !baseline.caretOk || !snap.caretOk || !caretTracks {
-                return "检测到手动操作，已暂停 — 读不到光标位置，把光标放回原处后按 \(startKeyName) 继续"
+                return (kb.isKeyMode ? "检测到手动操作，已暂停 — 远程窗口读不到光标位置，" : "检测到手动操作，已暂停 — 读不到光标位置，") +
+                    "把光标放回原处后按 \(startKeyName) 继续"
             }
             if snap.loc != baseline.loc {
                 // The last few keystrokes may not have been sampled yet: accept a caret that sits
@@ -597,6 +671,24 @@ final class TypingEngine {
     // ------------------------------------------------------------------ keyboard output
 
     private func key(_ unit: String) throws {
+        if kb.isKeyMode && unit != TypingEngine.backspace && unit != "\n" && unit != "\t" && unit != " " {
+            // Real-keyboard mode: Chinese goes through the IME as pinyin, Chinese punctuation needs the IME
+            // in Chinese mode, ASCII letters/symbols need it in English mode.
+            if TypingEngine.isCjk(unit) {
+                if let one = Pinyin.of([unit], 0, 1)[0] { try typePinyin([one], chars: 1); return }
+            } else if let k = TypingEngine.cnPunctKeys[unit] {
+                try setIme(true)
+                try keyRaw(k)
+                return
+            } else if unit.count == 1, let c = unit.first, c.isASCII, !c.isNumber {
+                try setIme(false)
+            }
+        }
+        try keyRaw(unit)
+    }
+
+    /// Sends one key/character as-is (no IME mode handling).
+    private func keyRaw(_ unit: String) throws {
         try gate()
         sampleCaret()
         if interfered { try gate() }
@@ -660,16 +752,16 @@ final class TypingEngine {
             let ns = value as NSString
             guard snap.loc <= ns.length else { proofMsg = "读不到目标文本，已跳过核对"; return }
             let actual = Array(TypingEngine.normalize(ns.substring(with: NSRange(location: startLoc, length: snap.loc - startLoc))))
-            if actual == expected {
+            if actual.count == expected.count && zip(actual, expected).allSatisfy({ same($0, $1) }) {
                 proofMsg = fixes > 0 ? "已修正 \(fixes) 处" : "核对无误"
                 return
             }
 
             var p = 0
-            while p < actual.count && p < expected.count && actual[p] == expected[p] { p += 1 }
+            while p < actual.count && p < expected.count && same(actual[p], expected[p]) { p += 1 }
             var sfx = 0
             while sfx < actual.count - p && sfx < expected.count - p &&
-                  actual[actual.count - 1 - sfx] == expected[expected.count - 1 - sfx] { sfx += 1 }
+                  same(actual[actual.count - 1 - sfx], expected[expected.count - 1 - sfx]) { sfx += 1 }
             let del = actual.count - p - sfx
             let ins = expected[p..<(expected.count - sfx)]
             if del + ins.count > max(40, expected.count / 2) {
@@ -685,6 +777,11 @@ final class TypingEngine {
             fixes += 1
         }
         proofMsg = "已修正 \(fixes) 处，仍有差异"
+    }
+
+    /// Equal for proofreading. In keyboard mode the IME may pick a homophone (长得 → 长的): not fixed.
+    private func same(_ a: Character, _ b: Character) -> Bool {
+        a == b || (kb.isKeyMode && TypingEngine.isCjk(String(a)) && TypingEngine.isCjk(String(b)))
     }
 
     // ------------------------------------------------------------------ helpers

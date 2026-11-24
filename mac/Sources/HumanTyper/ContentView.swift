@@ -122,6 +122,24 @@ struct SettingsPane: View {
                         Text("Return").tag(0)
                         Text("Shift+Return").tag(1)
                     }
+                    Picker("输入方式", selection: s.inputMode) {
+                        Text("标准（本机程序）").tag(0)
+                        Text("键盘按键（远程桌面 / 远控软件）").tag(1)
+                    }
+                    if model.settings.inputMode == 1 {
+                        Group {
+                            Picker("目标输入法开始时为", selection: s.remoteImeChinese) {
+                                Text("中文模式").tag(true)
+                                Text("英文模式").tag(false)
+                            }
+                            Picker("中英切换键", selection: s.imeToggleKey) {
+                                Text("Shift").tag(0)
+                                Text("Ctrl+Space").tag(1)
+                            }
+                            Text("键盘模式发出和实体键盘一样的按键，中文转成拼音交给目标电脑的中文输入法打出。请先把目标电脑切到中文输入法，并选对它现在是中文还是英文模式。")
+                                .font(.caption).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                     Group {
                         Toggle("光标离开原位置/程序时自动暂停", isOn: s.autoPause)
                         Toggle("打完后从头核对一遍", isOn: s.proofread)

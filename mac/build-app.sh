@@ -15,6 +15,8 @@ APP="$OUT/HumanTyper.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/HumanTyper"
+# Built-in pinyin table (shared with the Windows version), used by keyboard mode to type Chinese as pinyin.
+gunzip -c ../src/Resources/pinyin.dat.gz > "$APP/Contents/Resources/pinyin.dat"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

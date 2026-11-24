@@ -74,6 +74,9 @@ struct Settings: Codable, Equatable {
     var autoPause: Bool = true
     var proofread: Bool = true
     var switchToAsciiInput: Bool = true   // 开始时临时切到英文键盘布局，避免输入法拦截按键
+    var inputMode: Int = 0                // 0 = 标准(Unicode), 1 = 键盘按键（远程桌面 / 远控软件）
+    var remoteImeChinese: Bool = true     // 键盘模式下：目标输入法开始时处于中文模式
+    var imeToggleKey: Int = 0             // 0 = Shift, 1 = Ctrl+Space
     var countdown: Int = 3
     var newlineMode: Int = 0              // 0 = Return, 1 = Shift+Return
     var hideOnStart: Bool = false

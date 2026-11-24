@@ -137,7 +137,7 @@ The Mac version is a separate native Swift app (source in [`mac/`](../mac)) that
 
 Differences from the Windows version:
 
-- Only the "Standard" input mode (Unicode characters); no scan-code / driver mode yet, so Chinese can't be typed into remote-desktop windows.
+- Two input modes, "Standard" and "Keyboard keys". Keyboard-keys mode sends real key presses (US layout) just like a physical keyboard, so it works in ToDesk, Sunlogin, Microsoft Remote Desktop, VNC and virtual machines; Chinese is turned into pinyin and typed by the **remote computer's Chinese IME**, the same as the Windows "Scan Code" mode (set the IME's initial Chinese/English state and toggle key). There is no driver-level mode.
 - While typing it temporarily switches to an English keyboard layout so a Chinese IME doesn't swallow the keystrokes, then switches back (can be turned off).
 - Proofreading reads the field back through the macOS Accessibility API; apps that don't expose their text are skipped (no clipboard / OCR fallback).
 - Settings are stored in the user defaults (`defaults read io.github.ydnw6.HumanTyper`).
@@ -233,26 +233,44 @@ Run the compiled `out/HumanTyper.exe` directly.
 
 ```
 HumanTyper/
-├─ src/
-│  ├─ Program.cs         Entry point (single-instance guard)
-│  ├─ MainForm.cs        Main UI, global hotkeys, countdown timer
-│  ├─ TypingEngine.cs    Core engine: pacing, typos, pauses, pause/resume logic, key dispatch
-│  ├─ Proofreader.cs     Post-typing verification: text readback, diffing, keyboard correction
-│  ├─ OcrMatch.cs        OCR matching: aligns OCR tokens with source (dual-pass consensus only)
-│  ├─ ScreenOcr.cs       Window capture + Windows.Media.Ocr integration
-│  ├─ ClipboardText.cs   Clipboard backup / read / restore
-│  ├─ ProgressOverlay.cs Floating HUD overlay (non-focus-stealing, excluded from capture)
-│  ├─ TaskbarProgress.cs Windows taskbar button progress indicator
-│  ├─ FreeNotice.cs      Permanently-free notice dialog
-│  ├─ KeyboardOut.cs     Key output backends: Unicode / Scan Code / Interception driver
-│  ├─ Pinyin.cs          Hanzi → Pinyin converter (with polyphone support) for Keyboard Mode
-│  ├─ Resources/pinyin.dat.gz  Embedded Pinyin dictionary
-│  ├─ CaretProbe.cs      Foreground window focus & caret position probe (Win32 / MSAA)
-│  ├─ InputMonitor.cs    Low-level keyboard/mouse hooks to detect manual user input
-│  ├─ HotkeyBox.cs       Custom hotkey capture control
-│  ├─ Settings.cs        INI configuration persistence
-│  └─ NativeMethods.cs   Win32 P/Invoke declarations
-├─ tools/PinyinGen/      Utility to generate the Pinyin dictionary (data from mozillazg/pinyin-data, MIT)
+├─ src/                     Windows version (C# / WinForms, .NET Framework 4.8)
+│  ├─ Program.cs            Entry point (single-instance guard)
+│  ├─ MainForm.cs           Main UI, global hotkeys, countdown timer
+│  ├─ TypingEngine.cs       Core engine: pacing, typos, pauses, pause/resume logic, key dispatch
+│  ├─ Proofreader.cs        Post-typing verification: text readback, diffing, keyboard correction
+│  ├─ OcrMatch.cs           OCR matching: aligns OCR tokens with source (dual-pass consensus only)
+│  ├─ ScreenOcr.cs          Window capture + Windows.Media.Ocr integration
+│  ├─ ClipboardText.cs      Clipboard backup / read / restore
+│  ├─ ProgressOverlay.cs    Floating HUD overlay (non-focus-stealing, excluded from capture)
+│  ├─ TaskbarProgress.cs    Windows taskbar button progress indicator
+│  ├─ FreeNotice.cs         Permanently-free notice dialog
+│  ├─ KeyboardOut.cs        Key output backends: Unicode / Scan Code / Interception driver
+│  ├─ DriverSetup.cs        One-click Interception driver install / uninstall
+│  ├─ Pinyin.cs             Hanzi → Pinyin converter (with polyphone support) for Keyboard Mode
+│  ├─ Resources/pinyin.dat.gz  Embedded Pinyin dictionary (shared by the Windows and Mac versions)
+│  ├─ CaretProbe.cs         Foreground window focus & caret position probe (Win32 / MSAA)
+│  ├─ InputMonitor.cs       Low-level keyboard/mouse hooks to detect manual user input
+│  ├─ HotkeyBox.cs          Custom hotkey capture control
+│  ├─ Settings.cs           INI configuration persistence
+│  └─ NativeMethods.cs      Win32 P/Invoke declarations
+├─ mac/                     Mac version (Swift / SwiftUI + AppKit, macOS 12+)
+│  ├─ Package.swift         SwiftPM package manifest
+│  ├─ build-app.sh          Builds the universal binary (arm64 + x86_64), HumanTyper.app and HumanTyper.dmg
+│  └─ Sources/HumanTyper/
+│     ├─ HumanTyperApp.swift  Entry point, menus, single-instance guard
+│     ├─ ContentView.swift    Main window, settings pane, hotkey recorder
+│     ├─ AppModel.swift       UI state, countdown, start/pause/stop, free notice, permission prompt
+│     ├─ TypingEngine.swift   Typing engine (ported from Windows): pacing, typos, pauses, pinyin input, pause/resume, proofreading
+│     ├─ KeyboardOut.swift    Key output: Unicode / real key presses (US layout), temporary switch to an English layout
+│     ├─ Pinyin.swift         Hanzi → Pinyin (reads the shared dictionary)
+│     ├─ CaretProbe.swift     Focus, caret position and text via the Accessibility API
+│     ├─ HotKeys.swift        Global hotkeys (Carbon) + manual input monitor
+│     ├─ Overlay.swift        Progress overlay (non-focus-stealing, excluded from capture)
+│     └─ Settings.swift       Settings persistence (UserDefaults)
+├─ tools/PinyinGen/         Utility to generate the Pinyin dictionary (data from mozillazg/pinyin-data, MIT)
+├─ site/                    Website and download page (Cloudflare Pages)
+├─ functions/api/           GitHub Releases cache endpoint for the download page
+├─ .github/workflows/build.yml  Auto-builds Windows + Mac, manual releases
 ├─ docs/
 │   ├─screenshot.png
 │   └─README_EN.md
