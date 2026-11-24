@@ -10,7 +10,8 @@
 <meta property="og:image" content="https://humantyper-ewi.pages.dev/screenshot.png">
 <meta name="theme-color" content="#F7F8F3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111714" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3' y='3' width='26' height='26' fill='%23F7F8F3' stroke='%232E7D5B' stroke-width='2.5'/><path d='M10 21l12-10' stroke='%23D2372B' stroke-width='3' stroke-linecap='round'/></svg>">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css">
 <style>
 /* World: composition paper (稿纸). The green grid in the hero is the one bright element;
@@ -41,8 +42,7 @@ a,button,input,.btn{transition:color .15s var(--ease),background-color .15s var(
 
 nav{display:flex;justify-content:space-between;align-items:center;padding:24px 0 8px}
 .brand{font:400 20px/1 var(--kai);text-decoration:none;display:flex;align-items:center;gap:12px}
-.brand i{width:20px;height:20px;border:2px solid var(--grid);position:relative}
-.brand i::after{content:"";position:absolute;inset:7px 2px auto;height:2px;background:var(--red);transform:rotate(-35deg)}
+.brand img{width:28px;height:28px;display:block;border-radius:7px}
 nav .links{display:flex;align-items:center;gap:24px;font-size:15px;color:var(--muted)}
 nav .links a{text-decoration:none}
 nav .links a:hover{color:var(--ink)}
@@ -181,7 +181,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
 <body>
 <div class="wrap">
   <nav>
-    <a class="brand" href="#"><i></i>HumanTyper</a>
+    <a class="brand" href="#"><img src="icon.png" alt="" width="28" height="28">HumanTyper</a>
     <div class="links">
       <a href="#how">怎么打</a>
       <a href="#remote">远程桌面</a>

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="../assets/icon/icon-mac-1024.png" width="128" height="128" alt="HumanTyper icon">
+
 # HumanTyper
 
 **An auto-typing utility for Windows and macOS that types just like a real human**
@@ -131,7 +133,7 @@ Occasional homophone selections by the target IME are normal.
 The Mac version is a separate native Swift app (source in [`mac/`](../mac)) that uses the same typing engine: natural pacing, simulated typos, thinking pauses, mixed Chinese/English, auto-pause & resume, proofreading and the progress overlay.
 
 1. Download `HumanTyper.dmg` from [Releases](https://github.com/ydnw6/HumanTyper/releases/latest), open it and drag `HumanTyper.app` onto the Applications folder next to it (no unzipping; the same installer runs on Apple Silicon M-series and Intel Macs).
-2. First launch: the app has no paid Apple Developer ID signature, so **right-click → Open → Open** (or click "Open Anyway" in System Settings → Privacy & Security).
+2. First launch: the app has no paid Apple Developer ID signature, so on macOS 15+ dismiss the warning and click **"Open Anyway"** in System Settings → Privacy & Security; on macOS 14 and earlier **right-click → Open → Open** also works.
 3. Turn on HumanTyper under **System Settings → Privacy & Security → Accessibility** (needed to send keystrokes and read the caret). If typing stops working after an upgrade, remove the old HumanTyper entry and add it again.
 4. Usage is the same as on Windows: paste your text, click **Start** and click the target field during the countdown, or place the caret first and press `F8`. On laptop keyboards F8–F10 are media keys by default, so hold `fn` or pick another shortcut in the settings.
 

@@ -7,7 +7,8 @@
 <meta name="description" content="下载 HumanTyper Windows 版：单文件约 240 KB，免安装，适用于 Windows 10 和 11。附 SHA-256 校验值和更新记录。">
 <meta name="theme-color" content="#F7F8F3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111714" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3' y='3' width='26' height='26' fill='%23F7F8F3' stroke='%232E7D5B' stroke-width='2.5'/><path d='M10 21l12-10' stroke='%23D2372B' stroke-width='3' stroke-linecap='round'/></svg>">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css">
 <style>
 /* Same tokens as the home page. The file card is the composition-paper strip; the rest sits on neutral hairlines. */
@@ -37,8 +38,7 @@ a,button,.btn{transition:color .15s var(--ease),background-color .15s var(--ease
 
 nav{display:flex;justify-content:space-between;align-items:center;padding:24px 0 8px}
 .brand{font:400 20px/1 var(--kai);text-decoration:none;display:flex;align-items:center;gap:12px}
-.brand i{width:20px;height:20px;border:2px solid var(--grid);position:relative}
-.brand i::after{content:"";position:absolute;inset:7px 2px auto;height:2px;background:var(--red);transform:rotate(-35deg)}
+.brand img{width:28px;height:28px;display:block;border-radius:7px}
 nav .links{display:flex;align-items:center;gap:24px;font-size:15px;color:var(--muted)}
 nav .links a{text-decoration:none}
 nav .links a:hover{color:var(--ink)}
@@ -132,7 +132,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
 <body>
 <div class="wrap">
   <nav>
-    <a class="brand" href="./"><i></i>HumanTyper</a>
+    <a class="brand" href="./"><img src="icon.png" alt="" width="28" height="28">HumanTyper</a>
     <div class="links">
       <a href="./">介绍</a>
       <a href="#changelog">更新记录</a>
@@ -190,7 +190,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
       <h2>系统要求</h2>
       <ul class="req">
         <li><span>系统</span>Windows 10 / 11，或 macOS 12 及以上（Apple 芯片和 Intel 通用）</li>
-        <li><span>Mac 首次打开</span>右键 → 打开，并在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper</li>
+        <li><span>Mac 首次打开</span>macOS 15 及以上到“系统设置 → 隐私与安全性”点“仍要打开”（14 及以下右键 → 打开），并在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper</li>
         <li><span>运行环境</span>.NET Framework 4.8，Windows 10 和 11 已自带</li>
         <li><span>安装</span>不需要，单文件直接运行</li>
         <li><span>驱动级模式</span>可选，需要在程序里一键安装 Interception 驱动并重启</li>

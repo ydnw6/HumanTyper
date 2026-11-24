@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 enum FreeNotice {
     static let repoUrl = URL(string: "https://github.com/ydnw6/HumanTyper")!
     static let issuesUrl = URL(string: "https://github.com/ydnw6/HumanTyper/issues")!
+    static let sponsorUrl = URL(string: "https://ifdian.net/a/ydnw6")!
     static let qq = "959649446"
     static let oneLine = "本软件永久免费开源，付费购买请退款并举报卖家"
 
@@ -22,19 +23,86 @@ enum FreeNotice {
         HumanTyper 是免费的开源软件（MIT 许可证），不收取任何费用，也没有付费版、会员或激活码。
 
         如果你是花钱买到的，说明你被骗了：请立即向卖家所在平台申请退款，并举报该卖家。
-
-        官方地址：\(repoUrl.absoluteString)
-        问题反馈：GitHub Issues 或 QQ \(qq)
         """
+        a.accessoryView = links()
         a.addButton(withTitle: "我知道了")
-        a.addButton(withTitle: "打开 GitHub")
+        a.addButton(withTitle: "爱发电赞助 ♥")
         if startup {
             a.showsSuppressionButton = true
             a.suppressionButton?.title = "这个版本不再提示"
         }
-        if a.runModal() == .alertSecondButtonReturn { NSWorkspace.shared.open(repoUrl) }
+        if a.runModal() == .alertSecondButtonReturn { NSWorkspace.shared.open(sponsorUrl) }
         return a.suppressionButton?.state == .on
     }
+
+    /// Official address, issue tracker and QQ as clickable rows, plus the voluntary-sponsor note.
+    private static func links() -> NSView {
+        func label(_ s: String, secondary: Bool = false) -> NSTextField {
+            let t = NSTextField(wrappingLabelWithString: s)
+            t.font = .systemFont(ofSize: secondary ? 11 : 12)
+            if secondary { t.textColor = .secondaryLabelColor }
+            return t
+        }
+        func link(_ title: String, _ action: @escaping () -> Void) -> NSButton {
+            let b = ClosureButton(title: title, action: action)
+            b.isBordered = false
+            b.attributedTitle = NSAttributedString(string: title, attributes: [
+                .foregroundColor: NSColor.linkColor, .font: NSFont.systemFont(ofSize: 12),
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+            ])
+            b.setContentHuggingPriority(.required, for: .horizontal)
+            return b
+        }
+        func row(_ name: String, _ control: NSView) -> NSStackView {
+            let r = NSStackView(views: [label(name), control])
+            r.spacing = 4
+            return r
+        }
+
+        let copy = ClosureButton(title: "复制", action: {})
+        copy.bezelStyle = .rounded
+        copy.controlSize = .small
+        copy.onClick = { [weak copy] in
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(qq, forType: .string)
+            copy?.title = "已复制"
+        }
+        let qqRow = NSStackView(views: [label("QQ：\(qq)"), copy])
+        qqRow.spacing = 6
+
+        let stack = NSStackView(views: [
+            label("官方下载、问题反馈、功能建议："),
+            row("GitHub：", link(repoUrl.absoluteString.replacingOccurrences(of: "https://", with: "")) { NSWorkspace.shared.open(repoUrl) }),
+            row("问题反馈（Issues）：", link("github.com/ydnw6/HumanTyper/issues") { NSWorkspace.shared.open(issuesUrl) }),
+            qqRow,
+            label("觉得好用，可以在爱发电一下赞助作者。", secondary: true),
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 4
+        stack.setCustomSpacing(10, after: qqRow)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        let width: CGFloat = 340
+        stack.widthAnchor.constraint(equalToConstant: width).isActive = true
+        stack.layoutSubtreeIfNeeded()
+        stack.frame = NSRect(origin: .zero, size: NSSize(width: width, height: stack.fittingSize.height))
+        stack.translatesAutoresizingMaskIntoConstraints = true
+        return stack
+    }
+}
+
+/// NSButton that runs a closure (NSAlert accessory views have no controller to act as target).
+final class ClosureButton: NSButton {
+    var onClick: () -> Void
+    init(title: String, action: @escaping () -> Void) {
+        onClick = action
+        super.init(frame: .zero)
+        self.title = title
+        target = self
+        self.action = #selector(fire)
+    }
+    required init?(coder: NSCoder) { fatalError("not used") }
+    @objc private func fire() { onClick() }
 }
 
 /// UI state + glue between the window, the hotkeys, the overlay and the typing engine. Main thread only.
@@ -135,6 +203,17 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Clears a stale Accessibility entry (left by an older build) and asks again. No admin rights needed.
+    func resetAccessibility() {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        p.arguments = ["reset", "Accessibility", Bundle.main.bundleIdentifier ?? "io.github.ydnw6.HumanTyper"]
+        try? p.run()
+        p.waitUntilExit()
+        status = "已清除旧授权 — 请在弹出的系统设置里重新打开 HumanTyper 的开关"
+        openAccessibilitySettings()
+    }
+
     // ------------------------------------------------------------------ commands
 
     /// "开始" button: countdown, then type into whatever has focus when it ends.
@@ -182,6 +261,7 @@ final class AppModel: ObservableObject {
         if countdownLeft != nil {
             cancelCountdown()
             status = "已取消"
+            if settings.hideOnStart { NSApp.unhide(nil) }
             return
         }
         engine.stop()
@@ -191,6 +271,7 @@ final class AppModel: ObservableObject {
         cancelCountdown()
         guard checkReady() else { return }
         if engine.isBusy { engine.stopAndWait() }
+        if engine.isBusy { status = "上一次输入还没停下，请稍后再试"; return }
         beginOnFrontApp()
     }
 
