@@ -89,7 +89,7 @@ namespace HumanTyper
             qqRow.Controls.Add(copy);
             root.Controls.Add(qqRow);
 
-            var sponsorNote = Para("觉得好用，可以在爱发电自愿赞助作者。");
+            var sponsorNote = Para("觉得好用，可以在爱发电一下赞助作者。");
             sponsorNote.ForeColor = Color.FromArgb(95, 107, 100);
             sponsorNote.Margin = new Padding(0, 12, 0, 0);
             root.Controls.Add(sponsorNote);

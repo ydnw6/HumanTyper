@@ -75,7 +75,7 @@ enum FreeNotice {
             row("GitHub：", link(repoUrl.absoluteString.replacingOccurrences(of: "https://", with: "")) { NSWorkspace.shared.open(repoUrl) }),
             row("问题反馈（Issues）：", link("github.com/ydnw6/HumanTyper/issues") { NSWorkspace.shared.open(issuesUrl) }),
             qqRow,
-            label("觉得好用，可以在爱发电自愿赞助作者。", secondary: true),
+            label("觉得好用，可以在爱发电一下赞助作者。", secondary: true),
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
