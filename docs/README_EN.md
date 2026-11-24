@@ -2,7 +2,7 @@
 
 # HumanTyper
 
-**A Windows auto-typing utility that types just like a real human**
+**An auto-typing utility for Windows and macOS that types just like a real human**
 
 Natural pacing · Occasional typos & corrections · Word & sentence pauses · Chinese & English support
 
@@ -10,9 +10,10 @@ Natural pacing · Occasional typos & corrections · Word & sentence pauses · Ch
 [![Latest release](https://img.shields.io/github/v/release/ydnw6/HumanTyper?label=Latest%20Release)](https://github.com/ydnw6/HumanTyper/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/ydnw6/HumanTyper/total?label=Downloads)](https://github.com/ydnw6/HumanTyper/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20%7C%20macOS%2012%2B-0078D6)
+[![Sponsor](https://img.shields.io/badge/Sponsor-ifdian-946ce6)](https://ifdian.net/a/ydnw6)
 
-[**⬇ Download Latest**](https://github.com/ydnw6/HumanTyper/releases/latest) · [Quick Start](#quick-start) · [Parameters](#parameters) · [FAQ](#faq) · [中文](../README.md)
+[**⬇ Download Latest**](https://github.com/ydnw6/HumanTyper/releases/latest) · [Quick Start](#quick-start) · [macOS](#macos-version) · [Parameters](#parameters) · [FAQ](#faq) · [Sponsor](#sponsor) · [中文](../README.md)
 
 <img src="docs/screenshot.png" alt="HumanTyper Main Interface" width="760">
 
@@ -125,6 +126,30 @@ Occasional homophone selections by the target IME are normal.
 - To remove it later: click **"Uninstall Driver"** in the same spot, approve UAC, and reboot.
 - Interception is free for non-commercial use only; HumanTyper does not bundle the driver binary.
 
+## macOS Version
+
+The Mac version is a separate native Swift app (source in [`mac/`](../mac)) that uses the same typing engine: natural pacing, simulated typos, thinking pauses, mixed Chinese/English, auto-pause & resume, proofreading and the progress overlay.
+
+1. Download `HumanTyper.dmg` from [Releases](https://github.com/ydnw6/HumanTyper/releases/latest), open it and drag `HumanTyper.app` onto the Applications folder next to it (no unzipping; the same installer runs on Apple Silicon M-series and Intel Macs).
+2. First launch: the app has no paid Apple Developer ID signature, so **right-click → Open → Open** (or click "Open Anyway" in System Settings → Privacy & Security).
+3. Turn on HumanTyper under **System Settings → Privacy & Security → Accessibility** (needed to send keystrokes and read the caret). If typing stops working after an upgrade, remove the old HumanTyper entry and add it again.
+4. Usage is the same as on Windows: paste your text, click **Start** and click the target field during the countdown, or place the caret first and press `F8`. On laptop keyboards F8–F10 are media keys by default, so hold `fn` or pick another shortcut in the settings.
+
+Differences from the Windows version:
+
+- Two input modes, "Standard" and "Keyboard keys". Keyboard-keys mode sends real key presses (US layout) just like a physical keyboard, so it works in ToDesk, Sunlogin, Microsoft Remote Desktop, VNC and virtual machines; Chinese is turned into pinyin and typed by the **remote computer's Chinese IME**, the same as the Windows "Scan Code" mode (set the IME's initial Chinese/English state and toggle key). There is no driver-level mode.
+- While typing it temporarily switches to an English keyboard layout so a Chinese IME doesn't swallow the keystrokes, then switches back (can be turned off).
+- Proofreading reads the field back through the macOS Accessibility API; apps that don't expose their text are skipped (no clipboard / OCR fallback).
+- Settings are stored in the user defaults (`defaults read io.github.ydnw6.HumanTyper`).
+- macOS 12 or later, universal binary (Apple Silicon and Intel).
+
+Build it yourself (needs Xcode or the Command Line Tools):
+
+```bash
+cd mac
+./build-app.sh          # creates mac/out/HumanTyper.app and HumanTyper.dmg
+```
+
 ## Parameters
 
 | Group | Parameter | Default | Description |
@@ -208,26 +233,44 @@ Run the compiled `out/HumanTyper.exe` directly.
 
 ```
 HumanTyper/
-├─ src/
-│  ├─ Program.cs         Entry point (single-instance guard)
-│  ├─ MainForm.cs        Main UI, global hotkeys, countdown timer
-│  ├─ TypingEngine.cs    Core engine: pacing, typos, pauses, pause/resume logic, key dispatch
-│  ├─ Proofreader.cs     Post-typing verification: text readback, diffing, keyboard correction
-│  ├─ OcrMatch.cs        OCR matching: aligns OCR tokens with source (dual-pass consensus only)
-│  ├─ ScreenOcr.cs       Window capture + Windows.Media.Ocr integration
-│  ├─ ClipboardText.cs   Clipboard backup / read / restore
-│  ├─ ProgressOverlay.cs Floating HUD overlay (non-focus-stealing, excluded from capture)
-│  ├─ TaskbarProgress.cs Windows taskbar button progress indicator
-│  ├─ FreeNotice.cs      Permanently-free notice dialog
-│  ├─ KeyboardOut.cs     Key output backends: Unicode / Scan Code / Interception driver
-│  ├─ Pinyin.cs          Hanzi → Pinyin converter (with polyphone support) for Keyboard Mode
-│  ├─ Resources/pinyin.dat.gz  Embedded Pinyin dictionary
-│  ├─ CaretProbe.cs      Foreground window focus & caret position probe (Win32 / MSAA)
-│  ├─ InputMonitor.cs    Low-level keyboard/mouse hooks to detect manual user input
-│  ├─ HotkeyBox.cs       Custom hotkey capture control
-│  ├─ Settings.cs        INI configuration persistence
-│  └─ NativeMethods.cs   Win32 P/Invoke declarations
-├─ tools/PinyinGen/      Utility to generate the Pinyin dictionary (data from mozillazg/pinyin-data, MIT)
+├─ src/                     Windows version (C# / WinForms, .NET Framework 4.8)
+│  ├─ Program.cs            Entry point (single-instance guard)
+│  ├─ MainForm.cs           Main UI, global hotkeys, countdown timer
+│  ├─ TypingEngine.cs       Core engine: pacing, typos, pauses, pause/resume logic, key dispatch
+│  ├─ Proofreader.cs        Post-typing verification: text readback, diffing, keyboard correction
+│  ├─ OcrMatch.cs           OCR matching: aligns OCR tokens with source (dual-pass consensus only)
+│  ├─ ScreenOcr.cs          Window capture + Windows.Media.Ocr integration
+│  ├─ ClipboardText.cs      Clipboard backup / read / restore
+│  ├─ ProgressOverlay.cs    Floating HUD overlay (non-focus-stealing, excluded from capture)
+│  ├─ TaskbarProgress.cs    Windows taskbar button progress indicator
+│  ├─ FreeNotice.cs         Permanently-free notice dialog
+│  ├─ KeyboardOut.cs        Key output backends: Unicode / Scan Code / Interception driver
+│  ├─ DriverSetup.cs        One-click Interception driver install / uninstall
+│  ├─ Pinyin.cs             Hanzi → Pinyin converter (with polyphone support) for Keyboard Mode
+│  ├─ Resources/pinyin.dat.gz  Embedded Pinyin dictionary (shared by the Windows and Mac versions)
+│  ├─ CaretProbe.cs         Foreground window focus & caret position probe (Win32 / MSAA)
+│  ├─ InputMonitor.cs       Low-level keyboard/mouse hooks to detect manual user input
+│  ├─ HotkeyBox.cs          Custom hotkey capture control
+│  ├─ Settings.cs           INI configuration persistence
+│  └─ NativeMethods.cs      Win32 P/Invoke declarations
+├─ mac/                     Mac version (Swift / SwiftUI + AppKit, macOS 12+)
+│  ├─ Package.swift         SwiftPM package manifest
+│  ├─ build-app.sh          Builds the universal binary (arm64 + x86_64), HumanTyper.app and HumanTyper.dmg
+│  └─ Sources/HumanTyper/
+│     ├─ HumanTyperApp.swift  Entry point, menus, single-instance guard
+│     ├─ ContentView.swift    Main window, settings pane, hotkey recorder
+│     ├─ AppModel.swift       UI state, countdown, start/pause/stop, free notice, permission prompt
+│     ├─ TypingEngine.swift   Typing engine (ported from Windows): pacing, typos, pauses, pinyin input, pause/resume, proofreading
+│     ├─ KeyboardOut.swift    Key output: Unicode / real key presses (US layout), temporary switch to an English layout
+│     ├─ Pinyin.swift         Hanzi → Pinyin (reads the shared dictionary)
+│     ├─ CaretProbe.swift     Focus, caret position and text via the Accessibility API
+│     ├─ HotKeys.swift        Global hotkeys (Carbon) + manual input monitor
+│     ├─ Overlay.swift        Progress overlay (non-focus-stealing, excluded from capture)
+│     └─ Settings.swift       Settings persistence (UserDefaults)
+├─ tools/PinyinGen/         Utility to generate the Pinyin dictionary (data from mozillazg/pinyin-data, MIT)
+├─ site/                    Website and download page (Cloudflare Pages)
+├─ functions/api/           GitHub Releases cache endpoint for the download page
+├─ .github/workflows/build.yml  Auto-builds Windows + Mac, manual releases
 ├─ docs/
 │   ├─screenshot.png
 │   └─README_EN.md
@@ -243,13 +286,13 @@ HumanTyper/
 * **Pause Detection**: Records the foreground window handle, focused control, and caret coordinates at start, re-sampling after every keystroke. Low-level hooks trigger a pause whenever genuine (non-injected) mouse clicks or keystrokes occur, resuming only when window, focus, and caret position match.
 * **Proofreading**: Records pre-existing character count before typing; upon completion, reads back text via UI Automation `TextPattern`, runs a Myers diff between the newly typed slice and source text, and applies corrections in reverse order so offsets never shift.
 
-## CI/CD & Automated Releases
+## CI/CD & Releases
 
-This repository uses GitHub Actions for automated builds and releases ([`.github/workflows/build.yml`](https://www.google.com/search?q=.github/workflows/build.yml)):
+This repository uses GitHub Actions ([`.github/workflows/build.yml`](../.github/workflows/build.yml)):
 
-* **Auto Build**: Every push, PR, or manual dispatch compiles the binary and uploads `HumanTyper.exe` as a workflow artifact.
-* **Auto Release**: Pushing code changes to `main` automatically creates a new release `vX.Y.N` (auto-incrementing `N`) with the attached `.exe` and changelog since the last tag. Documentation-only commits trigger a build without publishing a release.
-* Major/minor versions are read from `<Version>` in `HumanTyper.csproj` (e.g., setting `1.1.0` makes the next release `v1.1.1`).
+* **Auto Build**: every push to `main` and every PR builds both the Windows exe and the Mac dmg installer and uploads them as workflow artifacts. Automatic builds **never** publish a release.
+* **Manual Release**: in Actions choose **Build & Release → Run workflow** on `main`, pick the version bump (`patch` / `minor` / `major`) and run it. It publishes `vX.Y.Z` with `HumanTyper.exe`, `HumanTyper.dmg` and the commit list since the last release. `none` builds without releasing.
+* The version is bumped from the latest `v*` tag (e.g. `v1.1.12` → patch → `v1.1.13`, minor → `v1.2.0`).
 
 ## Contributing
 
@@ -257,9 +300,13 @@ Issues and Pull Requests are welcome! Feel free to open an [Issue](https://githu
 
 1. Fork the repository and create a new branch;
 2. Verify your changes compile cleanly with `dotnet build` and test them in Notepad or your target app;
-3. Submit a PR describing what changed and why (CI will automatically run a build check).
+3. Submit a PR describing what changed and why (CI automatically builds the Windows and Mac versions as a check).
 
 When reporting bugs, please include the target application (e.g., specific website in Chrome, Word, Notepad), steps to reproduce, and any status bar messages.
+
+## Sponsor
+
+HumanTyper is free forever and sells nothing. If it helps you and you'd like to buy the author a coffee, you can sponsor voluntarily on ifdian: **[ifdian.net/a/ydnw6](https://ifdian.net/a/ydnw6)**. Sponsoring is entirely optional — every feature works without it.
 
 ## Disclaimer
 
@@ -267,4 +314,4 @@ This tool is intended for legitimate purposes such as software demos, screen rec
 
 ## License
 
-[MIT](https://www.google.com/search?q=LICENSE) © 2026 ydnw6. This software is permanently free—if you paid for it, demand a refund and report the seller. Third-party data licenses are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+[MIT](../LICENSE) © 2026 ydnw6. This software is permanently free—if you paid for it, demand a refund and report the seller. Third-party data licenses are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

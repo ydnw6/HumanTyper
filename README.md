@@ -2,7 +2,7 @@
 
 # HumanTyper
 
-**像真人一样打字的 Windows 自动输入工具**
+**像真人一样打字的自动输入工具（Windows / macOS）**
 
 有快有慢 · 偶尔打错再改 · 打几个词停一下 · 写完一句想一想 · 支持中英文
 
@@ -10,9 +10,10 @@
 [![Latest release](https://img.shields.io/github/v/release/ydnw6/HumanTyper?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/ydnw6/HumanTyper/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/ydnw6/HumanTyper/total?label=%E4%B8%8B%E8%BD%BD)](https://github.com/ydnw6/HumanTyper/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20%7C%20macOS%2012%2B-0078D6)
+[![Sponsor](https://img.shields.io/badge/%E8%B5%9E%E5%8A%A9-%E7%88%B1%E5%8F%91%E7%94%B5-946ce6)](https://ifdian.net/a/ydnw6)
 
-[**⬇ 下载最新版**](https://github.com/ydnw6/HumanTyper/releases/latest) · [使用方法](#快速上手) · [参数说明](#参数说明) · [常见问题](#常见问题) · [English](docs/README_EN.md)
+[**⬇ 下载最新版**](https://github.com/ydnw6/HumanTyper/releases/latest) · [使用方法](#快速上手) · [Mac 版](#mac-版) · [参数说明](#参数说明) · [常见问题](#常见问题) · [赞助](#赞助) · [English](docs/README_EN.md)
 
 <img src="docs/screenshot.png" alt="HumanTyper 主界面" width="760">
 
@@ -125,6 +126,30 @@ ToDesk、向日葵、Windows 远程桌面、VNC、虚拟机这类窗口只转发
 - 不想用了：同一位置点 **卸载驱动**，授权后重启。
 - Interception 仅限非商业用途免费，HumanTyper 本身不附带该驱动。
 
+## Mac 版
+
+Mac 版是用 Swift 原生编写的独立程序（源码在 [`mac/`](mac)），打字引擎与 Windows 版相同：拟人节奏、模拟错字、思考停顿、中英文混排、自动暂停 / 继续、打完核对、进度悬浮窗都有。
+
+1. 到 [Releases](https://github.com/ydnw6/HumanTyper/releases/latest) 下载 `HumanTyper.dmg`，双击打开后把 `HumanTyper.app` 拖到旁边的"应用程序"文件夹即可（无需解压；同一个安装包同时支持 M 系列芯片和 Intel 芯片）。
+2. 第一次打开：程序没有付费的 Apple 开发者签名，请**右键 → 打开 → 打开**（或在"系统设置 → 隐私与安全性"里点"仍要打开"）。
+3. 按提示在 **系统设置 → 隐私与安全性 → 辅助功能** 里打开 HumanTyper 的开关（模拟键盘、读取光标都需要这个权限）。升级新版本后如果不能打字，先删掉列表里旧的 HumanTyper 再重新添加。
+4. 用法和 Windows 版一样：粘贴文字，点 **开始** 后在倒计时内点一下目标输入框，或者先点好位置再按 `F8`。笔记本键盘上 F8–F10 默认是媒体键，要同时按 `fn`，也可以在设置里改成别的组合键。
+
+与 Windows 版的区别：
+
+- 有"标准"和"键盘按键"两种输入方式。键盘按键模式发出和实体键盘一样的按键（美式键位），可以在 ToDesk、向日葵、Microsoft 远程桌面、VNC、虚拟机等窗口里打字；中文会转成拼音、交给**目标电脑的中文输入法**打出，用法和 Windows 版的"键盘扫描码"模式相同（选对目标输入法开始时的中英文状态和切换键）。没有驱动级模式。
+- 打字时默认临时切换到英文键盘布局，避免中文输入法把按键当成拼音截走，打完自动切回（可在设置里关闭）。
+- 核对通过 macOS 辅助功能接口读回输入框文字；读不到的程序（部分自绘界面）会跳过核对，没有剪贴板 / 截图识别的备用方式。
+- 设置保存在系统偏好里（`defaults read io.github.ydnw6.HumanTyper`）。
+- 支持 macOS 12 及以上，Apple 芯片和 Intel 通用。
+
+自己编译（需要 Xcode 或 Command Line Tools）：
+
+```bash
+cd mac
+./build-app.sh          # 生成 mac/out/HumanTyper.app 和 HumanTyper.dmg
+```
+
 ## 参数说明
 
 | 分组 | 参数 | 默认值 | 说明 |
@@ -207,26 +232,44 @@ dotnet build HumanTyper.csproj -c Release -o out
 
 ```
 HumanTyper/
-├─ src/
-│  ├─ Program.cs         入口（单实例）
-│  ├─ MainForm.cs        界面、全局快捷键、倒计时
-│  ├─ TypingEngine.cs    打字引擎：节奏、错字、思考停顿、暂停/继续判断、键盘发送
-│  ├─ Proofreader.cs     打完核对：读回文本、差异比对、用键盘修正
-│  ├─ OcrMatch.cs        截图识别核对：OCR 词与原文比对（只认两遍一致的错词）
-│  ├─ ScreenOcr.cs       截图 + Windows.Media.Ocr
-│  ├─ ClipboardText.cs   剪贴板保存 / 读取 / 还原
-│  ├─ ProgressOverlay.cs 进度悬浮窗（不抢焦点、不进截图）
-│  ├─ TaskbarProgress.cs 任务栏按钮进度
-│  ├─ FreeNotice.cs      永久免费声明弹窗
-│  ├─ KeyboardOut.cs     键盘输出：Unicode / 扫描码 / Interception 驱动
-│  ├─ Pinyin.cs          汉字 → 拼音（含多音词），键盘模式下打拼音用
-│  ├─ Resources/pinyin.dat.gz  内置拼音表
-│  ├─ CaretProbe.cs      读取前台窗口的输入焦点和光标位置（Win32 / MSAA）
-│  ├─ InputMonitor.cs    低级键盘/鼠标钩子，检测用户手动操作
-│  ├─ HotkeyBox.cs       快捷键录入控件
-│  ├─ Settings.cs        设置的保存与读取
-│  └─ NativeMethods.cs   Win32 API 声明
-├─ tools/PinyinGen/      生成拼音表的小工具（数据来自 mozillazg/pinyin-data，MIT）
+├─ src/                     Windows 版（C# / WinForms，.NET Framework 4.8）
+│  ├─ Program.cs            入口（单实例）
+│  ├─ MainForm.cs           界面、全局快捷键、倒计时
+│  ├─ TypingEngine.cs       打字引擎：节奏、错字、思考停顿、暂停/继续判断、键盘发送
+│  ├─ Proofreader.cs        打完核对：读回文本、差异比对、用键盘修正
+│  ├─ OcrMatch.cs           截图识别核对：OCR 词与原文比对（只认两遍一致的错词）
+│  ├─ ScreenOcr.cs          截图 + Windows.Media.Ocr
+│  ├─ ClipboardText.cs      剪贴板保存 / 读取 / 还原
+│  ├─ ProgressOverlay.cs    进度悬浮窗（不抢焦点、不进截图）
+│  ├─ TaskbarProgress.cs    任务栏按钮进度
+│  ├─ FreeNotice.cs         永久免费声明弹窗
+│  ├─ KeyboardOut.cs        键盘输出：Unicode / 扫描码 / Interception 驱动
+│  ├─ DriverSetup.cs        Interception 驱动一键安装 / 卸载
+│  ├─ Pinyin.cs             汉字 → 拼音（含多音词），键盘模式下打拼音用
+│  ├─ Resources/pinyin.dat.gz  内置拼音表（Windows 版和 Mac 版共用）
+│  ├─ CaretProbe.cs         读取前台窗口的输入焦点和光标位置（Win32 / MSAA）
+│  ├─ InputMonitor.cs       低级键盘/鼠标钩子，检测用户手动操作
+│  ├─ HotkeyBox.cs          快捷键录入控件
+│  ├─ Settings.cs           设置的保存与读取
+│  └─ NativeMethods.cs      Win32 API 声明
+├─ mac/                     Mac 版（Swift / SwiftUI + AppKit，macOS 12+）
+│  ├─ Package.swift         SwiftPM 工程描述
+│  ├─ build-app.sh          编译通用二进制（arm64 + x86_64），打包 HumanTyper.app 和 HumanTyper.dmg
+│  └─ Sources/HumanTyper/
+│     ├─ HumanTyperApp.swift  入口、菜单、单实例
+│     ├─ ContentView.swift    主界面和设置面板、快捷键录入
+│     ├─ AppModel.swift       界面状态、倒计时、开始/暂停/停止、免费声明、权限提示
+│     ├─ TypingEngine.swift   打字引擎（从 Windows 版移植）：节奏、错字、停顿、拼音输入、暂停/继续、核对
+│     ├─ KeyboardOut.swift    键盘输出：Unicode / 真实按键（美式键位），临时切换英文键盘布局
+│     ├─ Pinyin.swift         汉字 → 拼音（读取共用的拼音表）
+│     ├─ CaretProbe.swift     通过辅助功能 API 读取输入焦点、光标位置和文本
+│     ├─ HotKeys.swift        全局快捷键（Carbon）+ 用户手动操作监听
+│     ├─ Overlay.swift        进度悬浮窗（不抢焦点、不进截图）
+│     └─ Settings.swift       设置的保存与读取（UserDefaults）
+├─ tools/PinyinGen/         生成拼音表的小工具（数据来自 mozillazg/pinyin-data，MIT）
+├─ site/                    官网和下载页（Cloudflare Pages）
+├─ functions/api/           下载页用的 GitHub Releases 缓存接口
+├─ .github/workflows/build.yml  自动构建 Windows + Mac，手动发布
 ├─ docs/
 │   ├─screenshot.png
 │   └─README_EN.md
@@ -243,11 +286,11 @@ HumanTyper/
 
 ## 自动构建与发布
 
-本仓库用 GitHub Actions 自动构建和发布（[`.github/workflows/build.yml`](.github/workflows/build.yml)）：
+本仓库用 GitHub Actions 构建和发布（[`.github/workflows/build.yml`](.github/workflows/build.yml)）：
 
-- **自动构建**：推送到任意分支、提交 PR 或手动运行时自动编译，exe 作为 Artifact 上传。
-- **自动发布**：推送到 `main` 且改动了代码时，自动发布新版本 `vX.Y.N`（N 自动递增），附带 exe 和自上个版本以来的提交列表；只改文档则只构建不发布。
-- 主 / 次版本号取自 `HumanTyper.csproj` 的 `<Version>`：改成 `1.1.0`，下一次发布就是 `v1.1.1`。
+- **自动构建**：推送到 `main` 或提交 PR 时，同时编译 Windows 版（exe）和 Mac 版（dmg 安装包），作为 Artifact 上传。自动构建**不会**发布版本。
+- **手动发布**：在 Actions 页面选 **Build & Release → Run workflow**（分支选 `main`），选择版本号自增方式 `patch` / `minor` / `major` 后运行，会发布新版本 `vX.Y.Z`，附带 `HumanTyper.exe`、`HumanTyper.dmg` 和自上个版本以来的提交列表。选 `none` 只构建不发布。
+- 版本号从最新的 `v*` 标签自增（如 `v1.1.12` → patch → `v1.1.13`，minor → `v1.2.0`）。
 
 ## 参与贡献
 
@@ -255,9 +298,13 @@ HumanTyper/
 
 1. Fork 本仓库并新建分支；
 2. 修改后本地 `dotnet build` 确认能编译，并在记事本等程序里实际试一下；
-3. 提交 PR，说明改了什么、为什么改。PR 会自动触发构建检查。
+3. 提交 PR，说明改了什么、为什么改。PR 会自动构建 Windows 和 Mac 两个版本作为检查。
 
 反馈问题时请尽量附上：目标程序（如 Chrome 里的某网站、Word、记事本）、复现步骤、状态栏提示文字。
+
+## 赞助
+
+HumanTyper 永久免费，不卖任何东西。如果它帮到了你，想请作者喝杯咖啡，可以在爱发电自愿赞助：**[ifdian.net/a/ydnw6](https://ifdian.net/a/ydnw6)**。赞助完全自愿，不赞助也能使用全部功能。
 
 ## 免责声明
 

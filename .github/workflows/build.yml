@@ -1,66 +1,126 @@
 name: Build & Release
 
-# 自动构建：推送到 main、提交/更新 PR、或手动运行，都会编译并上传 exe（Actions 页面的 Artifacts）。
-#   功能分支只在 PR 里构建一次，不再 push 和 pull_request 各跑一遍。
-# 自动发布：推送到 main 且改动了代码时，发布一个新版本（vX.Y.N，N 自动递增）。
-#   主/次版本号取自 HumanTyper.csproj 里的 <Version>，想发 1.1.x 就把它改成 1.1.0。
-#   只改文档（*.md、LICENSE）只构建、不发布。
+# 自动构建：推送到 main、提交/更新 PR 时，同时编译 Windows 版和 Mac 版，上传到 Actions 页面的 Artifacts。
+#   功能分支只在 PR 里构建一次，不会 push 和 pull_request 各跑一遍。自动构建不会发布版本。
+# 手动发布：Actions → Build & Release → Run workflow，选好版本号自增方式（patch / minor / major）后运行，
+#   会编译两个平台并发布新版本 vX.Y.Z（附 HumanTyper.exe 和 HumanTyper.dmg）。只能在 main 分支上发布。
+#   选 none 则只构建不发布（相当于手动跑一次自动构建）。
+#   版本号从最新的 v* 标签自增；还没有标签时以 HumanTyper.csproj 里的 <Version> 为起点。
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: 版本号自增部分（选 none 只构建、不发布）
+        type: choice
+        options: [patch, minor, major, none]
+        default: patch
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
-  # PR 推了新提交就取消旧构建；main 上的发布不能中途取消
+  group: build-${{ github.ref }}-${{ github.event_name }}
+  # PR 推了新提交就取消旧构建；发布不能中途取消
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
-    runs-on: windows-latest
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      release: ${{ steps.ver.outputs.release }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # need history + tags to compute the version and changelog
+          fetch-depth: 0   # need tags to compute the version
 
       - name: Compute version
         id: ver
         shell: bash
+        env:
+          BUMP: ${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'none' }}
         run: |
-          base=$(grep -oP '<Version>\K[0-9]+\.[0-9]+' HumanTyper.csproj)
-          # next patch = highest existing v<base>.N + 1
-          last=$(git tag -l "v${base}.*" | sed "s/^v${base}\.//" | { grep -E '^[0-9]+$' || true; } | sort -n | tail -1)
-          patch=$(( ${last:-0} + 1 ))
-          echo "version=${base}.${patch}" >> "$GITHUB_OUTPUT"
-          echo "Version: ${base}.${patch}"
+          last=$(git tag -l 'v*' | { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sed 's/^v//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+          if [ -z "$last" ]; then
+            last=$(grep -oP '<Version>\K[0-9]+\.[0-9]+\.[0-9]+' HumanTyper.csproj)
+          fi
+          IFS=. read -r major minor patch <<< "$last"
+          case "$BUMP" in
+            major) version="$((major + 1)).0.0" ;;
+            minor) version="${major}.$((minor + 1)).0" ;;
+            patch) version="${major}.${minor}.$((patch + 1))" ;;
+            *)     version="${major}.${minor}.$((patch + 1))" ;;   # build-only: label artifacts with the next patch
+          esac
+          release=false
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$BUMP" != "none" ]; then
+            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+              release=true
+            else
+              echo "::warning::只能在 main 分支上发布，本次只构建、不发布。"
+            fi
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "release=${release}" >> "$GITHUB_OUTPUT"
+          echo "Version: ${version}  release: ${release}"
+
+  # 名字保持为 build：main 分支规则把它作为 PR 必须通过的检查
+  build:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Build
-        run: dotnet build HumanTyper.csproj -c Release -o out -p:Version=${{ steps.ver.outputs.version }}
+        run: dotnet build HumanTyper.csproj -c Release -o out -p:Version=${{ needs.version.outputs.version }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: HumanTyper-${{ steps.ver.outputs.version }}
+          name: HumanTyper-${{ needs.version.outputs.version }}-windows
           path: out/HumanTyper.exe
 
+  build-mac:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app
+        working-directory: mac
+        run: bash build-app.sh "${{ needs.version.outputs.version }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HumanTyper-${{ needs.version.outputs.version }}-mac
+          path: mac/out/HumanTyper.dmg
+
+  release:
+    needs: [version, build, build-mac]
+    if: needs.version.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need history + tags for the changelog
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
       - name: Publish release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.ver.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           tag="v${VERSION}"
           prev=$(git tag -l 'v*' --sort=-v:refname | head -1)
-          if [ -n "$prev" ] && [ -z "$(git diff --name-only "$prev" HEAD | { grep -vE '\.md$|^LICENSE$|^docs/' || true; })" ]; then
-            echo "Only docs changed since $prev — build only, no new release."
-            exit 0
-          fi
           {
             echo "## 更新内容"
             echo
@@ -72,9 +132,13 @@ jobs:
             echo
             echo "## 下载"
             echo
-            echo "下载下方的 **HumanTyper.exe**，双击运行即可（Windows 10/11，系统自带 .NET Framework 4.8，无需安装）。"
+            echo "- **Windows**：下载 **HumanTyper.exe**，双击运行即可（Windows 10/11，系统自带 .NET Framework 4.8，无需安装）。"
+            echo "- **macOS**：下载 **HumanTyper.dmg**，双击打开后把 HumanTyper.app 拖到“应用程序”（无需解压）。第一次打开请右键 → 打开，并在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper（macOS 12 及以上，Apple 芯片和 Intel 通用）。"
+            echo
+            echo "> 本软件永久免费开源，付费购买请退款并举报卖家。"
           } > notes.md
-          gh release create "$tag" out/HumanTyper.exe \
+          ls -l dist
+          gh release create "$tag" dist/HumanTyper.exe dist/HumanTyper.dmg \
             --title "HumanTyper ${tag}" \
             --notes-file notes.md \
             --target "$GITHUB_SHA" \

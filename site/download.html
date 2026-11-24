@@ -65,6 +65,8 @@ h2{font:400 clamp(28px,3vw,32px)/1.3 var(--kai);margin:0 0 20px;text-wrap:balanc
 .btn{display:flex;justify-content:center;align-items:center;gap:8px;height:56px;padding:0 24px;font:500 17px/1 var(--sans);text-decoration:none;background:var(--ink);color:var(--paper);border:0;width:100%}
 .btn:hover{background:var(--grid)}
 .btn:active{transform:scale(.99)}
+.btn.second{margin-top:10px;background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn.second:hover{background:var(--ink);color:var(--paper)}
 .dl-size{font-weight:400;opacity:.7;font-size:15px;font-variant-numeric:tabular-nums}
 .dl-size:empty{display:none}
 .alt{margin:16px 0 0;font-size:14px;color:var(--muted)}
@@ -141,7 +143,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
   <div class="top">
     <div>
       <h1>下载 HumanTyper</h1>
-      <p class="lead">一个 exe 文件，下载后双击就能用，不用安装</p>
+      <p class="lead">Windows 版一个 exe，双击就能用；Mac 版打开 dmg 拖进“应用程序”</p>
       <div class="file">
         <div class="file-head">
           <div class="file-icon" aria-hidden="true">打</div>
@@ -155,6 +157,10 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
         <a class="btn" id="dl" href="https://github.com/ydnw6/HumanTyper/releases/latest/download/HumanTyper.exe">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>
           下载 HumanTyper.exe<span class="dl-size" id="dlSize"></span>
+        </a>
+        <a class="btn second" id="dlMac" href="https://github.com/ydnw6/HumanTyper/releases/latest/download/HumanTyper.dmg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>
+          下载 Mac 版（HumanTyper.dmg，M 芯片 / Intel 通用）<span class="dl-size" id="dlMacSize"></span>
         </a>
       </div>
       <p class="alt">文件托管在 GitHub。下载很慢或打不开时，可以到 <a href="https://github.com/ydnw6/HumanTyper/releases">GitHub 发布页</a> 重试，或者 <a href="https://github.com/ydnw6/HumanTyper#从源码构建">从源码自己编译</a>。</p>
@@ -183,11 +189,13 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
     <div>
       <h2>系统要求</h2>
       <ul class="req">
-        <li><span>系统</span>Windows 10 或 Windows 11</li>
+        <li><span>系统</span>Windows 10 / 11，或 macOS 12 及以上（Apple 芯片和 Intel 通用）</li>
+        <li><span>Mac 首次打开</span>右键 → 打开，并在“系统设置 → 隐私与安全性 → 辅助功能”里允许 HumanTyper</li>
         <li><span>运行环境</span>.NET Framework 4.8，Windows 10 和 11 已自带</li>
         <li><span>安装</span>不需要，单文件直接运行</li>
         <li><span>驱动级模式</span>可选，需要在程序里一键安装 Interception 驱动并重启</li>
         <li><span>价格</span>免费，MIT 协议开源</li>
+        <li><span>赞助</span>自愿，<a href="https://ifdian.net/a/ydnw6">爱发电 ifdian.net/a/ydnw6</a></li>
       </ul>
     </div>
   </div>
@@ -253,7 +261,10 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;font-size:14px;color
   }
   function render(list){
     if(!list.length)throw new Error('empty');
-    var rel=list[0], exe=rel.assets.filter(function(a){return /\.exe$/i.test(a.name);})[0];
+    var rel=list[0], exe=rel.assets.filter(function(a){return /\.exe$/i.test(a.name);})[0],
+      mac=rel.assets.filter(function(a){return /\.dmg$/i.test(a.name);})[0];
+    if(mac){$('dlMac').href=mac.url;$('dlMacSize').textContent=(mac.size/1024/1024).toFixed(1)+' MB';}
+    else{$('dlMac').style.display='none';}
     set('ver',rel.tag);
     // shown in the visitor's own time zone, with 今天 / 昨天 / N 天前 underneath
     var dd=$('date');dd.classList.remove('pending');
