@@ -15,6 +15,7 @@ namespace HumanTyper
         public const string RepoUrl = "https://github.com/ydnw6/HumanTyper";
         public const string IssuesUrl = RepoUrl + "/issues";
         public const string QQ = "959649446";
+        public const string SponsorUrl = "https://ifdian.net/a/ydnw6";
         public const string Owner = "ydnw6";
         public const string CopyrightLine = "© 2026 " + Owner;
         /// <summary>The one-sentence version, shown in the footer, title, status bar, overlay and settings file.</summary>
@@ -88,13 +89,23 @@ namespace HumanTyper
             qqRow.Controls.Add(copy);
             root.Controls.Add(qqRow);
 
-            var bottom = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, Dock = DockStyle.Fill, Margin = new Padding(0, 14, 0, 0) };
+            var sponsorNote = Para("觉得好用，可以在爱发电自愿赞助作者（ifdian.net/a/ydnw6），不赞助也能使用全部功能。");
+            sponsorNote.ForeColor = Color.FromArgb(95, 107, 100);
+            sponsorNote.Margin = new Padding(0, 12, 0, 0);
+            root.Controls.Add(sponsorNote);
+
+            var bottom = new TableLayoutPanel { AutoSize = true, ColumnCount = 3, Dock = DockStyle.Fill, Margin = new Padding(0, 14, 0, 0) };
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             _chkHide = new CheckBox { Text = "本版本不再自动弹出", AutoSize = true, Visible = startup, Margin = new Padding(0, 8, 12, 0) };
             var ok = new Button { Text = "我知道了", AutoSize = true, MinimumSize = new Size(100, 32), DialogResult = DialogResult.OK };
+            // voluntary sponsorship; opens the page and keeps the dialog open
+            var sponsor = new Button { Text = "爱发电赞助 ♥", AutoSize = true, MinimumSize = new Size(110, 32), Margin = new Padding(0, 3, 8, 3) };
+            sponsor.Click += (s, e) => Open(SponsorUrl);
             bottom.Controls.Add(_chkHide, 0, 0);
-            bottom.Controls.Add(ok, 1, 0);
+            bottom.Controls.Add(sponsor, 1, 0);
+            bottom.Controls.Add(ok, 2, 0);
             root.Controls.Add(bottom);
 
             Controls.Add(root);

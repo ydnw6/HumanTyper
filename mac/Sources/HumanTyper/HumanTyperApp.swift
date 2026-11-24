@@ -17,6 +17,7 @@ struct HumanTyperApp: App {
             CommandGroup(replacing: .help) {
                 Button("GitHub 项目主页") { NSWorkspace.shared.open(FreeNotice.repoUrl) }
                 Button("问题反馈") { NSWorkspace.shared.open(FreeNotice.issuesUrl) }
+                Button("爱发电赞助") { NSWorkspace.shared.open(FreeNotice.sponsorUrl) }
                 Button("永久免费声明") { FreeNotice.show(startup: false) }
             }
         }
