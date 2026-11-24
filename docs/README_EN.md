@@ -1,8 +1,3 @@
-为你整理好了完整的英文版 `README_EN.md`（你可以直接作为独立的英文 README，或者用来替换底部的简短英文说明，并在顶部增加语言切换链接 `[中文](README.md) · [English](README_EN.md)`）。
-
-译文保留了原版所有的排版细节、GitHub 警告框、折叠详情栏以及地道的技术术语表达：
-
-```markdown
 <div align="center">
 
 # HumanTyper
