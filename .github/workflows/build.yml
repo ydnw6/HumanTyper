@@ -1,15 +1,13 @@
 name: Build & Release
 
-# 自动构建：推送到 main、提交/更新 PR 时，同时编译 Windows 版和 Mac 版，上传到 Actions 页面的 Artifacts。
-#   功能分支只在 PR 里构建一次，不会 push 和 pull_request 各跑一遍。自动构建不会发布版本。
+# 合并检查：提交/更新 PR 时，同时编译 Windows 版和 Mac 版，上传到 Actions 页面的 Artifacts。
+#   推送到 main（包括合并 PR）不会再编译一遍。自动构建不会发布版本。
 # 手动发布：Actions → Build & Release → Run workflow，选好版本号自增方式（patch / minor / major）后运行，
 #   会编译两个平台并发布新版本 vX.Y.Z（附 HumanTyper.exe 和 HumanTyper.dmg）。只能在 main 分支上发布。
 #   选 none 则只构建不发布（相当于手动跑一次自动构建）。
 #   版本号从最新的 v* 标签自增；还没有标签时以 HumanTyper.csproj 里的 <Version> 为起点。
 
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
